@@ -1,324 +1,170 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html lang="ms">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AR Keadaan Jirim</title>
-
-  <!-- A-Frame dan MindAR -->
-  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-
-  <style>
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #101827;
-      color: white;
-    }
-
-    #panel {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      z-index: 10;
-      background: rgba(15, 23, 42, 0.92);
-      padding: 12px;
-      border-radius: 14px;
-      text-align: center;
-    }
-
-    h1 {
-      font-size: 21px;
-      margin: 0 0 6px;
-    }
-
-    #status {
-      font-size: 14px;
-      margin: 5px 0;
-      color: #bae6fd;
-    }
-
-    #description {
-      font-size: 13px;
-      line-height: 1.5;
-      margin: 5px 0 10px;
-    }
-
-    .buttons {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 9px;
-      padding: 10px 13px;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      background: #38bdf8;
-      color: #082f49;
-    }
-
-    button:last-child {
-      background: #fde68a;
-      color: #713f12;
-    }
-
-    #help {
-      position: fixed;
-      bottom: 8px;
-      left: 8px;
-      right: 8px;
-      z-index: 10;
-      text-align: center;
-      font-size: 12px;
-      background: rgba(15, 23, 42, 0.8);
-      padding: 8px;
-      border-radius: 10px;
-    }
-
-    a-scene {
-      position: fixed !important;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#081428"/>
+<title>AR ICE LAB | Panaskan & Sejukkan</title>
+<script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<style>
+:root{--ink:#eaf7ff;--cyan:#69dafa;--navy:#081428;--orange:#ff9b59;--ice:#83dffb}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#081428;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,sans-serif;-webkit-tap-highlight-color:transparent}button{font:inherit}
+a-scene{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;z-index:1}
+#shade{position:fixed;inset:0;z-index:2;pointer-events:none;background:linear-gradient(to bottom,rgba(4,14,30,.9) 0,rgba(4,14,30,.64) 112px,transparent 27%,transparent 65%,rgba(4,14,30,.64) 89%,rgba(4,14,30,.9) 100%)}
+#top{position:fixed;z-index:5;top:max(12px,env(safe-area-inset-top));left:13px;right:13px;pointer-events:none;display:flex;gap:9px;flex-direction:column}
+#brand{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#brand h1{font-size:15px;letter-spacing:.12em;margin:0;font-weight:900;color:white}
+#phase{border:1px solid rgba(126,220,249,.65);border-radius:999px;padding:7px 11px;font-size:12px;font-weight:900;background:rgba(4,30,54,.85)}
+#status{max-width:550px;color:#d9f3ff;font-weight:800;font-size:15px;line-height:1.25}
+#explanation{max-width:620px;color:#bfd5e5;font-size:12px;line-height:1.35;min-height:28px}
+#trackHint{position:fixed;z-index:3;pointer-events:none;left:50%;top:46%;transform:translate(-50%,-50%);width:160px;height:155px;border:2px dashed rgba(136,216,255,.75);border-radius:16px;display:flex;align-items:center;justify-content:center;text-align:center;color:#d9f8ff;font-weight:800;font-size:13px;padding:18px;background:rgba(2,24,49,.12)}
+#trackHint.hidden{display:none}
+#targets{z-index:4;position:fixed;left:0;right:0;top:49%;height:126px;pointer-events:none}
+.target{position:absolute;top:5px;width:112px;height:112px;border-radius:21px;border:2px solid rgba(255,255,255,.38);display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(6,22,43,.65);box-shadow:0 12px 30px rgba(0,0,0,.25);transition:border-color .2s,box-shadow .2s,transform .2s}
+.target.active{transform:scale(1.05)}#cool-zone{left:max(12px,3vw);border-color:rgba(91,197,255,.75)}#heat-zone{right:max(12px,3vw);border-color:rgba(255,158,87,.8)}
+#cool-zone.active{box-shadow:0 0 30px rgba(51,167,255,.55);border-color:#bbf4ff}#heat-zone.active{box-shadow:0 0 30px rgba(255,146,60,.6);border-color:#ffe1b5}
+.target .symbol{font-size:39px;line-height:1.05}.target .label{font-size:11px;font-weight:900;letter-spacing:.05em;margin:6px 0 4px}
+.progress{height:5px;border-radius:8px;width:73%;background:rgba(255,255,255,.2);overflow:hidden}.progress>i{display:block;width:0;height:100%;background:#ffffff;transition:width .15s linear}
+#centerCue{position:fixed;z-index:4;pointer-events:none;top:calc(49% + 130px);left:8px;right:8px;text-align:center;font-size:12px;font-weight:700;text-shadow:0 1px 6px #000}
+#bottom{position:fixed;z-index:5;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+#steps{display:flex;gap:5px;flex:1;min-width:150px;justify-content:center}#steps span{padding:5px 8px;font-size:11px;font-weight:800;background:rgba(6,24,43,.7);border:1px solid rgba(150,210,250,.25);border-radius:100px;color:#cde3f0}#steps span.selected{background:#def7ff;color:#082b4b}
+#fallbackToggle{background:rgba(6,26,48,.8);border:1px solid rgba(180,215,239,.5);color:#e8f9ff;padding:9px 12px;border-radius:10px;font-weight:800;font-size:11px;cursor:pointer}
+#backup{display:none;position:fixed;z-index:9;bottom:75px;left:14px;right:14px;background:rgba(7,28,49,.95);border:1px solid rgba(104,208,245,.6);border-radius:15px;padding:14px;max-width:580px;margin:auto}
+#backup.visible{display:block}#backup h2{margin:0 0 6px;font-size:14px}#backup p{font-size:12px;color:#bcd8ea;margin:0 0 12px}#backup .buttons{display:flex;gap:8px}#backup .buttons button{flex:1;border:0;border-radius:10px;padding:12px 6px;color:#0b2235;font-weight:900;background:#ffb579;cursor:pointer}#backup .buttons button:last-child{background:#99e4fb}
+#backup .mini{margin-top:8px;font-size:10px;color:#b6d5e8}
+@media(max-width:370px){.target{height:96px;width:93px}.target .symbol{font-size:33px}.target .label{font-size:10px}#targets{top:50%;height:102px}#centerCue{top:calc(50% + 108px)}#brand h1{font-size:13px}}
+@media (orientation:landscape) and (max-height:540px){#targets{top:37%}.target{width:92px;height:90px}.target .symbol{font-size:30px}#top{gap:4px}#explanation{font-size:11px}#trackHint{height:105px;top:46%}#centerCue{top:calc(37% + 96px)}}
+</style>
 </head>
-
 <body>
-  <div id="panel">
-    <h1>🧊 AR Keadaan Jirim 🔥</h1>
-    <div id="status">Sediakan kad AIS dan HABA</div>
-    <div id="description">
-      Pepejal: zarah rapat dan bergetar pada kedudukan tetap.
-    </div>
-    <div class="buttons">
-      <button id="heat">🔥 Tambah Haba</button>
-      <button id="cool">❄️ Sejukkan</button>
-    </div>
-  </div>
-
-  <div id="help">
-    Benarkan akses kamera. Imbas kad AIS dahulu.
-    Dekatkan kad HABA untuk menunjukkan perubahan keadaan.
-  </div>
-
-  <a-scene
-    mindar-image="imageTargetSrc: ./targets.mind;
-                  autoStart: true;
-                  uiScanning: yes;
-                  maxTrack: 2;"
-    color-space="sRGB"
-    renderer="colorManagement: true, physicallyCorrectLights"
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false">
-
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-    <!-- Sasaran pertama: kad AIS -->
-    <a-entity id="ice-anchor" mindar-image-target="targetIndex: 0">
-
-      <a-entity id="particle-model">
-
-        <!-- Label keadaan jirim -->
-        <a-text
-          id="model-title"
-          value="PEPEJAL"
-          position="0 1.05 0"
-          align="center"
-          color="#ffffff"
-          width="3.5">
-        </a-text>
-
-        <!-- Zarah dijana melalui JavaScript -->
-        <a-entity id="particles"></a-entity>
-
-        <a-text
-          value="Model zarah"
-          position="0 -0.85 0"
-          align="center"
-          color="#ffffff"
-          width="2.5">
-        </a-text>
-
-      </a-entity>
-    </a-entity>
-
-    <!-- Sasaran kedua: kad HABA -->
-    <a-entity id="heat-anchor" mindar-image-target="targetIndex: 1">
-      <a-ring
-        position="0 0 0.01"
-        radius-inner="0.28"
-        radius-outer="0.34"
-        color="#fb923c"
-        material="shader: flat">
-      </a-ring>
-    </a-entity>
-
-  </a-scene>
-
-  <script>
-    const particlesContainer = document.querySelector("#particles");
-    const statusText = document.querySelector("#status");
-    const description = document.querySelector("#description");
-    const modelTitle = document.querySelector("#model-title");
-
-    const iceAnchor = document.querySelector("#ice-anchor");
-    const heatAnchor = document.querySelector("#heat-anchor");
-
-    let phase = "solid";
-    let iceVisible = false;
-    let heatVisible = false;
-    let particles = [];
-
-    const explanations = {
-      solid: {
-        title: "PEPEJAL",
-        status: "Keadaan jirim: Pepejal",
-        description:
-          "Zarah tersusun rapat dan hanya bergetar pada kedudukan tetap. Contoh: ais."
-      },
-      liquid: {
-        title: "CECAIR",
-        status: "Keadaan jirim: Cecair",
-        description:
-          "Zarah masih rapat tetapi boleh bergerak dan meluncur antara satu sama lain. Ais mencair menjadi air."
-      },
-      gas: {
-        title: "GAS",
-        status: "Keadaan jirim: Gas",
-        description:
-          "Zarah berjauhan dan bergerak bebas dengan pantas. Air boleh menjadi wap air apabila menerima haba."
-      }
-    };
-
-    function createParticles() {
-      particlesContainer.innerHTML = "";
-      particles = [];
-
-      for (let i = 0; i < 27; i++) {
-        const sphere = document.createElement("a-sphere");
-        sphere.setAttribute("radius", "0.075");
-        sphere.setAttribute("color", "#38bdf8");
-        sphere.setAttribute("material", "roughness: 0.35");
-
-        particlesContainer.appendChild(sphere);
-        particles.push(sphere);
-      }
-
-      renderParticles();
-    }
-
-    function renderParticles() {
-      particles.forEach((sphere, i) => {
-        let x, y, z;
-
-        if (phase === "solid") {
-          // Susunan teratur dan rapat
-          x = ((i % 3) - 1) * 0.23;
-          y = (Math.floor(i / 9) - 1) * 0.23 + 0.1;
-          z = ((Math.floor(i / 3) % 3) - 1) * 0.23;
-          sphere.setAttribute("color", "#38bdf8");
-
-        } else if (phase === "liquid") {
-          // Zarah rapat tetapi kurang teratur
-          const angle = i * 2.399;
-          const radius = 0.12 + (i % 4) * 0.075;
-          x = Math.cos(angle) * radius;
-          y = 0.05 + (i % 5) * 0.09;
-          z = Math.sin(angle) * radius;
-          sphere.setAttribute("color", "#34d399");
-
-        } else {
-          // Zarah berjauhan
-          const angle = i * 2.399;
-          const radius = 0.18 + (i % 4) * 0.18;
-          x = Math.cos(angle) * radius;
-          y = -0.05 + (i % 7) * 0.17;
-          z = Math.sin(angle) * radius;
-          sphere.setAttribute("color", "#fb923c");
-        }
-
-        sphere.setAttribute("position", `${x} ${y} ${z}`);
-      });
-    }
-
-    function setPhase(newPhase) {
-      phase = newPhase;
-      const info = explanations[phase];
-
-      modelTitle.setAttribute("value", info.title);
-      statusText.textContent = info.status;
-      description.textContent = info.description;
-
-      renderParticles();
-    }
-
-    // Imbas kad AIS
-    iceAnchor.addEventListener("targetFound", () => {
-      iceVisible = true;
-      updateFromCards();
-    });
-
-    iceAnchor.addEventListener("targetLost", () => {
-      iceVisible = false;
-      updateFromCards();
-    });
-
-    // Imbas kad HABA
-    heatAnchor.addEventListener("targetFound", () => {
-      heatVisible = true;
-      updateFromCards();
-    });
-
-    heatAnchor.addEventListener("targetLost", () => {
-      heatVisible = false;
-      updateFromCards();
-    });
-
-    function updateFromCards() {
-      if (iceVisible && heatVisible) {
-        setPhase("liquid");
-        statusText.textContent =
-          "Kedua-dua kad dikesan: Haba menyebabkan ais mencair.";
-      } else if (iceVisible) {
-        setPhase("solid");
-        statusText.textContent =
-          "Kad AIS dikesan. Tekan Tambah Haba untuk meneruskan.";
-      } else if (heatVisible) {
-        statusText.textContent =
-          "Kad HABA dikesan. Imbas kad AIS bersama-sama.";
-      } else {
-        statusText.textContent =
-          "Halakan kamera ke kad AIS dan HABA.";
-      }
-    }
-
-    document.querySelector("#heat").addEventListener("click", () => {
-      if (phase === "solid") {
-        setPhase("liquid");
-      } else if (phase === "liquid") {
-        setPhase("gas");
-      }
-    });
-
-    document.querySelector("#cool").addEventListener("click", () => {
-      if (phase === "gas") {
-        setPhase("liquid");
-      } else if (phase === "liquid") {
-        setPhase("solid");
-      }
-    });
-
-    createParticles();
-  </script>
+<a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiScanning: yes; maxTrack: 1;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+  <!-- Gambar AIS yang sedia ada ialah targetIndex 0; tiada kad api diperlukan. -->
+  <a-entity id="ice-anchor" mindar-image-target="targetIndex: 0">
+    <a-entity id="particles"></a-entity>
+    <a-text id="ar-name" value="PEPEJAL" position="0 0.7 0" align="center" width="2.7" color="#ffffff" font="roboto"></a-text>
+  </a-entity>
+</a-scene>
+<div id="shade"></div>
+<div id="top">
+  <div id="brand"><h1>🧊 AR ICE LAB</h1><span id="phase">PEPEJAL</span></div>
+  <div id="status" role="status">Halakan kamera ke gambar AIS.</div>
+  <div id="explanation">Perhatikan susunan dan pergerakan zarah semasa menerima atau kehilangan haba.</div>
+</div>
+<div id="trackHint">IMBAS GAMBAR AIS<br/>DI SINI</div>
+<div id="targets">
+  <div class="target" id="cool-zone"><div class="symbol">❄️</div><div class="label">SEJUKKAN</div><div class="progress"><i id="cool-progress"></i></div></div>
+  <div class="target" id="heat-zone"><div class="symbol">🔥</div><div class="label">PANASKAN</div><div class="progress"><i id="heat-progress"></i></div></div>
+</div>
+<div id="centerCue">Gerakkan gambar AIS ke simbol 🔥 atau ❄️ pada skrin</div>
+<div id="bottom">
+  <div id="steps"><span id="step-solid" class="selected">AIS</span><span id="step-liquid">AIR</span><span id="step-gas">WAP AIR</span></div>
+  <button type="button" id="fallbackToggle">Kawalan sandaran</button>
+</div>
+<div id="backup" aria-hidden="true">
+  <h2>Kawalan alternatif</h2><p>Jika gambar sukar dikesan, gunakan butang ini untuk meneruskan pembelajaran.</p>
+  <div class="buttons"><button type="button" id="manualHeat">🔥 Panaskan</button><button type="button" id="manualCool">❄️ Sejukkan</button></div>
+  <div class="mini">Pemasa di skrin ialah model simulasi, bukan bacaan suhu sebenar.</div>
+</div>
+<script>
+(()=>{'use strict';
+const ice=document.querySelector('#ice-anchor'), particlesRoot=document.querySelector('#particles'), scene=document.querySelector('a-scene');
+const statusEl=document.querySelector('#status'), descriptionEl=document.querySelector('#explanation'), phaseEl=document.querySelector('#phase'), label3D=document.querySelector('#ar-name');
+const zones={heat:document.querySelector('#heat-zone'),cool:document.querySelector('#cool-zone')};
+const progress={heat:document.querySelector('#heat-progress'),cool:document.querySelector('#cool-progress')};
+const names={solid:'PEPEJAL',liquid:'CECAIR',gas:'GAS'};
+const descriptions={
+ solid:'Ais: zarah tersusun rapat dan teratur, bergetar pada kedudukan tetap.',
+ liquid:'Pencairan: ais menyerap haba. Zarah air masih berdekatan tetapi bergerak dan meluncur antara satu sama lain.',
+ gas:'Pengewapan: air terus menyerap haba hingga menjadi gas. Zarah berjauhan dan bergerak bebas secara rawak.'
+};
+let state='solid', tracked=false, activeZone=null, dwell=0, lastTime=performance.now();
+const holdTime=2400; // 2.4 s setiap langkah, sekadar model pengajaran
+const parts=[], count=27;
+const v=new THREE.Vector3(); const THREE2=THREE;
+function random(i,seed){let n=Math.sin(i*79.33+seed*37.71)*43758.5453;return n-Math.floor(n)}
+function setState(next){
+ if(next===state)return;state=next;dwell=0;
+ phaseEl.textContent=names[state]; label3D.setAttribute('value',names[state]);
+ descriptionEl.textContent=descriptions[state];
+ for(const id of Object.keys(names)) document.querySelector('#step-'+id).classList.toggle('selected',id===state);
+ initialisePositions();
+}
+function initialisePositions(){
+ for(let i=0;i<count;i++){
+ const p=parts[i]; if(!p)continue;
+ if(state==='solid'){
+  p.base.set(((i%3)-1)*.185,(Math.floor(i/9)-1)*.185,((Math.floor(i/3)%3)-1)*.185);
+  p.mesh.object3D.position.copy(p.base);
+ }else if(state==='liquid'){
+  const row=Math.floor(i/9),col=i%9;
+  p.base.set(-.34+(col%3)*.24+(random(i,1)-.5)*.055,-.26+row*.16+(random(i,2)-.5)*.04,-.22+Math.floor(col/3)*.22+(random(i,3)-.5)*.04);
+  p.mesh.object3D.position.copy(p.base);
+ }else{
+  p.base.set((random(i,2)-.5)*1.06,(random(i,4)-.5)*.95,(random(i,7)-.5)*.85);
+  p.mesh.object3D.position.copy(p.base);
+ }
+ p.vel.set((random(i,11)-.5)*.43,(random(i,12)-.5)*.34,(random(i,13)-.5)*.36);
+ }
+}
+function createParticles(){
+ for(let i=0;i<count;i++){
+  const entity=document.createElement('a-sphere');entity.setAttribute('radius','.063');entity.setAttribute('color','#65d9f6');entity.setAttribute('material','roughness: .38; metalness: .12');
+  particlesRoot.appendChild(entity);parts.push({mesh:entity,base:new THREE2.Vector3(),vel:new THREE2.Vector3()});
+ }
+ initialisePositions();
+}
+function nextPhase(hot){const next=hot?({solid:'liquid',liquid:'gas',gas:'gas'}[state]):({gas:'liquid',liquid:'solid',solid:'solid'}[state]);if(next!==state)setState(next)}
+function centerOf(el){const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2,w:r.width,h:r.height}}
+function isNear(point,element){let z=centerOf(element);return Math.abs(point.x-z.x)<z.w*.64&&Math.abs(point.y-z.y)<z.h*.63}
+function projection(){if(!scene.camera||!scene.canvas||!ice.object3D)return null;
+ ice.object3D.getWorldPosition(v); v.project(scene.camera);
+ if(!Number.isFinite(v.x)||!Number.isFinite(v.y)||v.z>1)return null;
+ const r=scene.canvas.getBoundingClientRect();return{x:r.left+(v.x+1)*.5*r.width,y:r.top+(1-v.y)*.5*r.height};
+}
+function animateParticles(dt,t){for(let i=0;i<parts.length;i++){
+ const p=parts[i],pos=p.mesh.object3D.position;
+ if(state==='solid'){
+  pos.set(p.base.x+Math.sin(t*.011+i*.8)*.009,p.base.y+Math.cos(t*.013+i*.6)*.009,p.base.z+Math.sin(t*.01+i)*.009);
+ }else if(state==='liquid'){
+  // Pergerakan terhad dalam kelompok zarah rapat, bersifat ilustratif.
+  const radius=.045;
+  pos.set(p.base.x+Math.sin(t*.0015+i*1.9)*radius,p.base.y+Math.cos(t*.0016+i*2.6)*radius*.55,p.base.z+Math.cos(t*.0017+i*1.3)*radius);
+ }else{
+  pos.addScaledVector(p.vel,dt/1000);
+  for(const a of ['x','y','z']){let bound=a==='x'?.55:a==='y'?.48:.48;if(Math.abs(pos[a])>bound){pos[a]=Math.sign(pos[a])*bound;p.vel[a]*=-1}}
+ }
+}}
+function setDetected(isVisible){tracked=isVisible;document.querySelector('#trackHint').classList.toggle('hidden',isVisible);
+ if(!isVisible){activeZone=null;dwell=0;statusEl.textContent='Imbas gambar AIS untuk meneruskan.';}
+ else{statusEl.textContent='Zarah dikesan. Alihkan gambar AIS ke 🔥 atau ❄️.';}
+}
+ice.addEventListener('targetFound',()=>setDetected(true));
+ice.addEventListener('targetLost',()=>setDetected(false));
+function frame(t){const dt=Math.min(65,Math.max(0,t-lastTime));lastTime=t;
+ animateParticles(dt,t);
+ let zone=null;
+ if(tracked){const p=projection();if(p){if(isNear(p,zones.heat))zone='heat';else if(isNear(p,zones.cool))zone='cool'}}
+ if(zone!==activeZone){activeZone=zone;dwell=0}
+ if(zone){
+ const canChange=zone==='heat'?state!=='gas':state!=='solid';
+ if(canChange){dwell+=dt;if(dwell>=holdTime){nextPhase(zone==='heat');dwell=0}}
+ else dwell=0;
+ statusEl.textContent=zone==='heat'?(state==='gas'?'Gas terbentuk! Alih ke ❄️ untuk menyejukkan.':'Haba dibekalkan — kekalkan gambar di kawasan api.'):(state==='solid'?'Ais terbentuk semula!':'Haba disingkirkan — kekalkan gambar di kawasan salji.');
+ }else if(tracked){statusEl.textContent='Gerakkan gambar AIS ke 🔥 untuk panaskan atau ❄️ untuk sejukkan.'}
+ for(const key of ['heat','cool']){
+ zones[key].classList.toggle('active',key===zone);
+ progress[key].style.width=(key===zone?Math.round(dwell/holdTime*100):0)+'%';
+ }
+ requestAnimationFrame(frame)}
+createParticles(); requestAnimationFrame(frame);
+const panel=document.querySelector('#backup');
+document.querySelector('#fallbackToggle').addEventListener('click',()=>{const open=!panel.classList.contains('visible');panel.classList.toggle('visible',open);panel.setAttribute('aria-hidden',String(!open))});
+document.querySelector('#manualHeat').addEventListener('click',()=>{nextPhase(true);statusEl.textContent='Pemanasan secara manual: '+names[state]});
+document.querySelector('#manualCool').addEventListener('click',()=>{nextPhase(false);statusEl.textContent='Penyejukan secara manual: '+names[state]});
+})();
+</script>
 </body>
 </html>
