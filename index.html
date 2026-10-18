@@ -36,6 +36,24 @@ a-scene{position:fixed!important;inset:0!important;width:100%!important;height:1
 #backup .mini{margin-top:8px;font-size:10px;color:#b6d5e8}
 @media(max-width:370px){.target{height:96px;width:93px}.target .symbol{font-size:33px}.target .label{font-size:10px}#targets{top:50%;height:102px}#centerCue{top:calc(50% + 108px)}#brand h1{font-size:13px}}
 @media (orientation:landscape) and (max-height:540px){#targets{top:37%}.target{width:92px;height:90px}.target .symbol{font-size:30px}#top{gap:4px}#explanation{font-size:11px}#trackHint{height:105px;top:46%}#centerCue{top:calc(37% + 96px)}}
+
+
+body > video {
+  z-index: 0 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: none !important;
+}
+
+a-scene {
+  z-index: 1 !important;
+  background: transparent !important;
+}
+
+a-scene canvas {
+  background: transparent !important;
+}
+
 </style>
 </head>
 <body>
