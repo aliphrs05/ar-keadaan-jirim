@@ -4,46 +4,65 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>AR ICE LAB — Keadaan Jirim</title>
+<title>AR ICE LAB - Keadaan Jirim</title>
 
 <script>
-const CAMERA_MODE =
-  new URLSearchParams(location.search).get("kamera") === "depan"
-    ? "user" : "environment";
+const KAMERA =
+  new URLSearchParams(location.search)
+    .get('kamera') === 'depan'
+    ? 'user' : 'environment';
 
-let SELFIE_FLIP = CAMERA_MODE === "user";
+let selfie = KAMERA === 'user';
 
-// Pilih kamera sebelum MindAR dimulakan.
-if (navigator.mediaDevices?.getUserMedia) {
-  const original = navigator.mediaDevices.getUserMedia
-    .bind(navigator.mediaDevices);
+// Pilih kamera depan atau belakang.
+if (navigator.mediaDevices &&
+    navigator.mediaDevices.getUserMedia) {
 
-  navigator.mediaDevices.getUserMedia = function(c) {
-    if (!c || !c.video) return original(c);
+  const getAsal =
+    navigator.mediaDevices.getUserMedia
+      .bind(navigator.mediaDevices);
 
-    const video = typeof c.video === "object"
-      ? {...c.video} : {};
+  navigator.mediaDevices.getUserMedia =
+    function(syarat) {
 
-    delete video.deviceId;
-    video.facingMode = {exact: CAMERA_MODE};
+      if (!syarat || !syarat.video) {
+        return getAsal(syarat);
+      }
 
-    return original({...c, video, audio: false});
-  };
+      const video =
+        typeof syarat.video === 'object'
+          ? {...syarat.video}
+          : {};
+
+      delete video.deviceId;
+
+      video.facingMode = {
+        exact: KAMERA
+      };
+
+      return getAsal({
+        ...syarat,
+        video,
+        audio: false
+      });
+    };
 }
 
-// Kamera depan menggunakan paparan selfie.
 document.documentElement.classList.toggle(
-  "selfie", SELFIE_FLIP
+  'selfie', selfie
 );
 
-function switchCamera() {
-  const url = new URL(location.href);
-  url.searchParams.set(
-    "kamera",
-    CAMERA_MODE === "user" ? "belakang" : "depan"
+function tukarKamera() {
+  const u = new URL(location.href);
+
+  u.searchParams.set(
+    'kamera',
+    KAMERA === 'user'
+      ? 'belakang'
+      : 'depan'
   );
-  url.searchParams.set("v", "dual-control-final");
-  location.href = url.toString();
+
+  location.href = u.href;
 }
 </script>
 
@@ -60,9 +79,9 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #07192a;
+  font-family: Arial, sans-serif;
+  background: #071827;
   color: white;
-  font-family: Arial, system-ui, sans-serif;
 }
 
 button {
@@ -70,7 +89,8 @@ button {
   cursor: pointer;
 }
 
-/* Kamera sebenar sebagai latar. */
+/* KAMERA DAN PAPARAN AR */
+
 body video {
   z-index: 0 !important;
   opacity: 1 !important;
@@ -91,18 +111,13 @@ a-scene canvas {
   background: transparent !important;
 }
 
-/* Kamera depan: paparan seperti selfie. */
-html.selfie video,
+/* KAMERA DEPAN SEPERTI SELFIE */
+
+html.selfie body video,
 html.selfie a-scene canvas {
   transform: scaleX(-1) !important;
   -webkit-transform: scaleX(-1) !important;
   transform-origin: center center !important;
-}
-
-html:not(.selfie) video,
-html:not(.selfie) a-scene canvas {
-  transform: none !important;
-  -webkit-transform: none !important;
 }
 
 #shade {
@@ -111,16 +126,16 @@ html:not(.selfie) a-scene canvas {
   z-index: 2;
   pointer-events: none;
   background: linear-gradient(
-    to bottom,
-    #061727e8,
-    transparent 32%,
+    #051626b8,
+    transparent 35%,
     transparent 65%,
-    #061727e8
+    #051626e8
   );
 }
 
-/* Bahagian atas. */
-#top {
+/* TAJUK */
+
+header {
   position: fixed;
   z-index: 5;
   top: max(12px, env(safe-area-inset-top));
@@ -129,84 +144,76 @@ html:not(.selfie) a-scene canvas {
   pointer-events: none;
 }
 
-#header {
+.title {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 9px;
-}
-
-#header strong {
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
   font-size: 16px;
-  letter-spacing: .08em;
 }
 
 #phaseLabel {
-  padding: 7px 11px;
-  border: 1px solid #8adff8;
+  background: #133e58ed;
+  border: 1px solid #84e5f4;
   border-radius: 22px;
-  background: #06314acb;
-  font-size: 12px;
-  font-weight: 800;
+  padding: 7px;
+  font-size: 11px;
 }
 
 #status {
   margin-top: 9px;
+  font-weight: bold;
   font-size: 13px;
-  font-weight: 800;
-  text-shadow: 0 1px 5px black;
+  text-shadow: 0 1px 5px #000;
 }
 
-#description {
-  margin-top: 5px;
-  max-width: 600px;
-  color: #dcf4fb;
+#info {
+  margin-top: 6px;
+  color: #def3ff;
   font-size: 12px;
-  line-height: 1.4;
-  text-shadow: 0 1px 6px black;
+  line-height: 1.45;
+  text-shadow: 0 1px 5px #000;
 }
 
-/* Panduan imbas dan pratonton sandaran. */
-#scanHint {
+/* PRATONTON ZARAH */
+
+#preview {
   position: fixed;
   z-index: 3;
   top: 42%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(244px, 58vw);
-  padding: 10px 8px;
-  border: 2px dashed #afebfa;
-  border-radius: 18px;
-  background: #062035dc;
+  padding: 8px 12px;
+  border: 1px dashed #77dcee;
+  background: #07304ed9;
+  border-radius: 15px;
   text-align: center;
-  font-size: 12px;
-  font-weight: 850;
+  width: min(220px, 57vw);
   pointer-events: none;
 }
 
-#scanHint.hidden {
+#preview.hidden {
   display: none;
 }
 
-#fallbackCanvas {
-  display: block;
+#preview canvas {
   width: 100%;
-  height: 100px;
-  margin: 6px auto 3px;
-}
-
-.fallbackCaption {
+  height: 90px;
   display: block;
-  font-size: 10px;
-  line-height: 1.35;
-  color: #d4efff;
 }
 
-/* CARA 1: KAWASAN TAHAN / GERAK GAMBAR AIS */
+#preview p {
+  margin: 6px 0 0;
+  font-size: 11px;
+}
+
+/* CARA PERTAMA: TAHAN SIMBOL */
+
 #zones {
   position: fixed;
   z-index: 5;
-  top: 50%;
+  top: 51%;
   left: 8px;
   right: 8px;
   display: flex;
@@ -215,203 +222,194 @@ html:not(.selfie) a-scene canvas {
 }
 
 .zone {
+  width: 101px;
+  height: 111px;
   pointer-events: auto;
   touch-action: none;
   user-select: none;
-  width: 105px;
-  height: 116px;
-  border: 2px solid #a0d8f7a8;
-  border-radius: 19px;
-  background: #0a253cc5;
+  background: #10344acf;
+  border: 2px solid #89d5f6;
   color: white;
+  border-radius: 16px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  flex-direction: column;
+  gap: 4px;
   font-size: 12px;
-  font-weight: 900;
-  box-shadow: 0 9px 25px #0005;
+  font-weight: bold;
 }
 
 .zone b {
-  font-size: 37px;
-  line-height: 1;
+  font-size: 35px;
+  line-height: 1.2;
 }
 
-#heatZone {
-  border-color: #ffb07d;
-}
-
-#coolZone {
-  border-color: #92dfff;
+#heat {
+  border-color: #ffa56d;
 }
 
 .zone.active {
-  box-shadow: 0 0 23px #dcf7ffb3;
-  border-color: white;
+  box-shadow: 0 0 20px #a5f0ff;
+  transform: scale(1.03);
 }
 
-.meter {
-  width: 72%;
+.track {
   height: 5px;
-  background: #ffffff46;
+  width: 70%;
   border-radius: 8px;
+  background: #ffffff40;
   overflow: hidden;
 }
 
-.meter i {
+.fill {
   display: block;
-  width: 0%;
   height: 100%;
-  background: white;
+  width: 0;
+  background: #fff;
 }
 
-#instruction {
-  position: fixed;
-  z-index: 4;
-  top: calc(50% + 121px);
-  width: 100%;
-  padding: 0 10px;
-  font-size: 12px;
-  font-weight: 700;
-  text-align: center;
-  text-shadow: 0 1px 6px black;
-  pointer-events: none;
-}
+/* CARA KEDUA: TEKAN SEKALI */
 
-/* Bahagian bawah. */
 #bottom {
   position: fixed;
   z-index: 6;
-  bottom: max(12px, env(safe-area-inset-bottom));
   left: 10px;
   right: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 7px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  display: grid;
+  gap: 8px;
 }
 
-/* CARA 2: BUTANG TEKAN SEKALI */
-#quickActions {
+#quick {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 9px;
+  gap: 8px;
 }
 
 .quick {
-  min-height: 46px;
-  border: 2px solid #b9e9fb;
-  border-radius: 13px;
   color: white;
-  font-size: 14px;
+  min-height: 48px;
+  font-size: 13px;
   font-weight: 900;
-  box-shadow: 0 5px 15px #0008;
+  border: 2px solid #a4dff4;
+  border-radius: 12px;
   touch-action: manipulation;
 }
 
 #quickCool {
-  background: #135a85;
-  border-color: #87dbff;
+  background: #135c88;
 }
 
 #quickHeat {
-  background: #97451f;
-  border-color: #ffc098;
+  background: #a04822;
+  border-color: #ffb28a;
 }
 
-.quick:active {
-  filter: brightness(1.3);
-  transform: scale(.98);
-}
-
-#bottomRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 7px;
-  flex-wrap: wrap;
-}
-
-#controls {
+#tools {
   display: flex;
   gap: 6px;
+  align-items: center;
   flex-wrap: wrap;
+  justify-content: space-between;
 }
 
-.ctl {
-  padding: 10px;
-  border: 1px solid #aaddec;
-  border-radius: 11px;
-  background: #113f5fe8;
-  color: white;
+.tool {
+  border: 1px solid #a0d5e9;
+  border-radius: 10px;
+  padding: 9px;
+  background: #164565e8;
+  color: #fff;
   font-size: 11px;
-  font-weight: 800;
-}
-
-#flipButton {
-  display: none;
-}
-
-html.selfie #flipButton,
-html.front-requested #flipButton {
-  display: inline-block;
+  font-weight: bold;
 }
 
 #states {
   display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-  justify-content: center;
+  gap: 4px;
 }
 
 #states span {
-  padding: 7px 9px;
-  border: 1px solid #7293a176;
-  border-radius: 20px;
-  background: #071c30c9;
-  color: #d1e4f1;
   font-size: 10px;
+  background: #082a40;
+  padding: 7px;
+  border: 1px solid #5b889d;
+  border-radius: 20px;
+}
+
+#states span.sel {
+  color: #08304b;
+  background: #bef3ff;
+}
+
+/* PAPARAN GAMBAR AIS ASAL */
+
+#photo {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: #061626ed;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+#photo.hide {
+  display: none;
+}
+
+#photo img {
+  width: min(330px, 76vw, 49vh);
+  aspect-ratio: 1/1;
+  object-fit: contain;
+  border: 5px solid #ecfaff;
+  border-radius: 14px;
+}
+
+#photo h2 {
+  margin: 0;
+  color: #7be8f2;
+  font-size: 19px;
+}
+
+#photo p {
+  font-size: 13px;
+  max-width: 320px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+#photo button {
+  border: none;
+  background: #83e6ef;
+  color: #052c44;
+  border-radius: 12px;
+  padding: 13px 20px;
   font-weight: 900;
 }
 
-#states .on {
-  background: #c0f3ff;
-  color: #072b40;
-  border-color: #c0f3ff;
-}
-
-@media (max-width: 370px) {
+@media(max-width:360px) {
   .zone {
-    width: 90px;
-    height: 98px;
+    height: 96px;
+    width: 85px;
   }
 
   .zone b {
-    font-size: 31px;
-  }
-
-  #instruction {
-    top: calc(50% + 101px);
+    font-size: 29px;
   }
 
   .quick {
-    min-height: 42px;
-    font-size: 12px;
+    font-size: 11px;
+    min-height: 43px;
   }
 
-  #bottomRow {
-    justify-content: center;
-  }
-
-  .ctl {
-    padding: 7px 9px;
+  .tool {
     font-size: 10px;
-  }
-
-  #states span {
-    padding: 5px 7px;
+    padding: 7px;
   }
 }
 </style>
@@ -419,10 +417,11 @@ html.front-requested #flipButton {
 
 <body>
 
-<!-- TARGET AIS ASAL -->
+<!-- MODEL AR GAMBAR AIS -->
+
 <a-scene
   mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; maxTrack: 1; uiScanning: yes;"
-  renderer="alpha: true; antialias: true; colorManagement: true"
+  renderer="alpha: true; antialias: true"
   vr-mode-ui="enabled: false"
   device-orientation-permission-ui="enabled: false">
 
@@ -432,18 +431,18 @@ html.front-requested #flipButton {
   </a-camera>
 
   <a-entity
-    id="iceMarker"
+    id="marker"
     mindar-image-target="targetIndex: 0">
 
-    <a-entity id="particleRoot"></a-entity>
+    <a-entity id="balls"></a-entity>
 
     <a-text
-      id="modelName"
+      id="arText"
       value="PEPEJAL"
-      position="0 .70 0"
-      width="2.3"
       align="center"
-      color="#ffffff">
+      color="#ffffff"
+      position="0 .7 0"
+      width="2.3">
     </a-text>
 
   </a-entity>
@@ -451,677 +450,666 @@ html.front-requested #flipButton {
 
 <div id="shade"></div>
 
-<div id="top">
-  <div id="header">
-    <strong>🧊 AR ICE LAB</strong>
+<header>
+  <div class="title">
+    <span>🧊 AR ICE LAB</span>
     <span id="phaseLabel">PEPEJAL • AIS</span>
   </div>
 
   <div id="status">
-    Benarkan kamera, kemudian imbas gambar AIS.
+    Benarkan kamera dan imbas gambar AIS.
   </div>
 
-  <div id="description">
-    Zarah pepejal tersusun rapat dan teratur,
-    serta bergetar pada kedudukan tetap.
+  <div id="info">
+    Zarah pepejal rapat, teratur dan
+    bergetar pada kedudukan tetap.
   </div>
-</div>
+</header>
 
-<!-- PRATONTON JIKA IMBAS AIS SUKAR -->
-<div id="scanHint">
-  HALAKAN KAMERA KE GAMBAR AIS
+<!-- ZARAH SANDARAN -->
+
+<div id="preview">
+  <b>HALAKAN KAMERA KE GAMBAR AIS</b>
 
   <canvas
-    id="fallbackCanvas"
-    width="220"
-    height="100">
+    id="previewCanvas"
+    width="210"
+    height="90">
   </canvas>
 
-  <span class="fallbackCaption">
-    Sukar imbas? Cuba butang PANASKAN /
-    SEJUKKAN di bawah.
-  </span>
+  <p>
+    Jika imbasan sukar, tekan butang di bawah.
+  </p>
 </div>
 
-<!-- CARA 1: TAHAN 2.3 SAAT / GERAK GAMBAR -->
+<!-- KAWASAN TAHAN 2.3 SAAT -->
+
 <div id="zones">
 
   <button
-    type="button"
     class="zone"
-    id="coolZone">
+    id="cool"
+    type="button">
     <b>❄️</b>
     SEJUKKAN
+    TAHAN 2.3 SAAT
 
-    <div class="meter">
-      <i id="coolFill"></i>
+    <div class="track">
+      <i class="fill" id="cf"></i>
     </div>
   </button>
 
   <button
-    type="button"
     class="zone"
-    id="heatZone">
+    id="heat"
+    type="button">
     <b>🔥</b>
     PANASKAN
+    TAHAN 2.3 SAAT
 
-    <div class="meter">
-      <i id="heatFill"></i>
+    <div class="track">
+      <i class="fill" id="hf"></i>
     </div>
   </button>
 
 </div>
 
-<div id="instruction">
-  CARA 1: Gerakkan gambar AIS atau
-  tahan simbol selama 2.3 saat.
-</div>
+<!-- BUTANG TEKAN SEKALI -->
 
 <div id="bottom">
 
-  <!-- CARA 2: SEKALI TEKAN TERUS BERUBAH -->
-  <div id="quickActions">
+  <div id="quick">
 
     <button
-      type="button"
       class="quick"
-      id="quickCool">
+      id="quickCool"
+      type="button">
       ❄️ SEJUKKAN • TEKAN
     </button>
 
     <button
-      type="button"
       class="quick"
-      id="quickHeat">
+      id="quickHeat"
+      type="button">
       🔥 PANASKAN • TEKAN
     </button>
 
   </div>
 
-  <div id="bottomRow">
+  <div id="tools">
 
-    <div id="controls">
-      <button
-        type="button"
-        class="ctl"
-        id="switchButton"
-        onclick="switchCamera()">
-        ⇄ TUKAR KAMERA
-      </button>
+    <button
+      class="tool"
+      onclick="tukarKamera()"
+      id="cameraBtn">
+      ⇄ TUKAR KAMERA
+    </button>
 
-      <button
-        type="button"
-        class="ctl"
-        id="flipButton">
-        ⇋ BALIKKAN PAPARAN
-      </button>
-    </div>
+    <button
+      class="tool"
+      id="selfieBtn"
+      type="button">
+      ⇋ SELFIE
+    </button>
+
+    <button
+      class="tool"
+      id="photoBtn"
+      type="button">
+      🧊 GAMBAR AIS
+    </button>
 
     <div id="states">
-      <span id="s0" class="on">AIS</span>
-      <span id="s1">AIR</span>
-      <span id="s2">WAP AIR</span>
+      <span class="sel">AIS</span>
+      <span>AIR</span>
+      <span>WAP AIR</span>
     </div>
 
   </div>
 </div>
 
+<!-- GAMBAR AIS ASAL TERTANAM DALAM KOD -->
+
+<div id="photo">
+
+  <h2>GAMBAR PENANDA AR</h2>
+
+  <img
+    alt="Gambar AIS asal"
+    src="data:image/webp;base64,UklGRmoSAABXRUJQVlA4IF4SAACQVACdASrcANwAPxlyrFEspqOjrz6aKZAjCUTsRb1sGk5yK4ovw5bqni9+ZCxq1OOW7O3Zz+25hoNNlB/TTG2eA/8vMP9zG2gA9MmJUvzl+6CffYupsSytzfTVZvUGsRpYbuavMyTllOvROef15NzIbLlJ8xo4GMy8zwBB9gKBDf4UrFdTFXrkx5pxBj1epSS15wiIpfSK29ab/dCBeX4GljEVOL9TRevbmboY/QYU1klwM4/nDKVyApJrx3jdPHj+za++WhpmPiEwCgE4g/ckEiZXUCDwZ4tOx+6G47g3d+2MFG1V1OyKazCkt6gV9B9qD4Wgg073ZlP0ruYK0uObnhMt7zLm0XHnbDp0LRrJ4TVo3J59lsyOF1XMNsvFXY1U15MeX9KcZX2SAz3WNghhlbxQvQhJHYKMJAsjqcgDiwsJOEISS5ZGKcpo841i3vg80GPsxGMcLo5vrF7P6VHXAdaA/xcyoXU9Am0BWWFWuomFr0pFGlrwINj+MJVHH8TUizOOMyYZH5GmdDgJ5O3ajmdKyq2BGZf0vtqO5CrjgIk9+2MRKhzt7ax0QU1ftB+HCDQxItqYp8RM3dfCMNQHkcRda3WjAw+MA3MJCBRYR0JjMiTK2tFG4aO1VKiZyk70dmTYBNIM/a6xRRwPUTfbGkVYRSeRJEXNCgYhqlnLdVETzupfn4s9tYmSSg3FDKu76Yflxeb/y4nYHCqlTZXTYxnzSxGrh6dynmAEucZWVMhR5K4O3YLW5BQLlgd9w4XYXpkGnWee0DV6rsNTCjEGp0U0llI00fjw26k/71yr4GZe5XKcue66+T+LeGaD/UOywH6m6qtn4Pmlh0D3t43BcsSS+Ga/u2HjFVx6pJf078I4tnPWQTDRDyh6H5vfVYJdnZdSnL7QebVR4sgAAP7b07+dGQTlGmpJL6hFvyjj/F0veivBv8O03pZC0SsvG9JcGjn96KT8z2Pk4OsiW2V4zMdNrrmIrn9Ye/ve1HhOiu1HSsjUSt+BXfOXqPUpO7kPqaOXBAiAEXVoRN2D0lBzDlFZl50HBMvj24m15NGx8tSaOJkOoGEnLyRxWWdtrlMoY4NQp+iGdq7DoqoiZjEFV7pLkgX+vwP/NexlfMfFDCPHR45JHNGLlL2A1X5LCnsXTNRYmwoquHfgd6vsbewtDcGMNRoWvgtAcTCMscgdEmIJCpBSjSJolcmwmw9A/WtCmO+B4iqI2ZPywLJ5k4V40rvsBJzbPB+Sq+kvcRef9LVsOzp/+Bqk6N883sLkdNsXV+DKulGr4G4q6SNZZQiNsMkbmbsWbcuxGBh7+YPUhQ+UCi0x4GuNCAvVbjPW6pzQN0oGfExDUd4eXjHvj8ovlPmOkUyztFWdzjkyL80y7YC6B1wKS9IFSiZ76w50Uawd3xAJ9NaVRer7SXDG8Nq5to5ZAkAZrWCKY2L/KjrdFY6sJY5Nad/0/uWMPQym/j6qROgpC5bUvJuP6392l2ZbvimDpFwUrAzr9kNylRJsirGJaarqHz5QSi9a35fVQYjbN2EpR8w7TpiC7HtU7GLG2LG8mhVFTDgu7O/uEVQuA9FnjZ37aUQkudeWylPShvqtLyf47rJ5UhHjBW2zN0uW0jnacyc4XiHJIRtqI2MTuEYBbTRaYrYe0DOAYVVDB5JSFN5uo1816PXkP48uv1HEVtK5/pXHAh6JpI3IKvPddpjFmlQEhAUZjSFlnl9bMSlgroYuCmb7EQcfgvumKtSHhUz7Gwp8RSAtLaLd8FXMqGAIDj0Z/voXG1GIcBjoIn2el9eB1Fx9C7/pyp9z28zeSke+xQSpTaPVmFhy8kMv2iwRGYufZ6aFpxDxeTPi5R7IKf8gQsnZOv4u9sBoGtgr5FRih2ByS6ZayzrqZXCzVXCYBE6McIrIlCRw/MIzYfFZGsxGaod000yHcXHU484vY5ZKLATBmn95UD8TQksHuuaE1mWcEYw14g61CZb5+SkPSuLG2NAbsPvr2ifod5QRMeoOsc2UHepgZsXpZVBz04/fxpMuaRldMC6NYSoKRCTZKU5JgwVjWZdCtPsXLlFLzdeVYsHA/khObNTm5CxAUTWurx2XCLa7sfBA0ZgFWJR3379d1cbXslMM1aNlwu3xbWYdlvGEZTqDMyVVrapypEc4JIeNrOiPHns+/fLWvvPabiSescQyO64ucAHpZ3l0igUbBPOgSQphaYlFNeLGZYY6yXHpl0lkybGQQ4Mhp9bNnnm7tZ0Am7fdUjXnVXRqdCx0udIcd/icnvJMJ0oTkhrCKhpEquMFk7bjYp8z4sChdQj14WGyoa8hAC6UKlYO5Lh8CcigS7TZf44qdf3BbDQENOYL96olkAH/GsCS/Uo53pufiIeldQP7/NrPSisRB4aWaJigPqTOTQ6BgrfVbNPPDOOINEcIxAFmG89zCCa3RVCFEWn0gGcDICRInSHX1Vl5MbKTdDX5f8TOiIqeTEINDvLeaZPjDJpeVXJ8fOPdIteqb4m4bp7AdoMYSzUya40JZfolwV8l9in1AJMwu/W6ngrckgbg3jM9zOIcaho1lhot01eb9Bsu+euHiiVgfidRfO6dEPkq7YeK1r3YoFGFCDJHdMfRwIY8RoD61p24w9UBRmNMBqKMdIQnOkjltLJiexBaoE+qmbXZxkRUdnt7+fN+3sRHSrOm3tKPzCJcx/2/yBIP3KBV+BQOYDcZReU5fZYwOXSpzjGhBhwrxnVUby8/Z2lYuwXq7gv+gLb8Mk3Lx+a0NiOCBv3AzIkh4hNNWDZCIpUI9F6KULedE6cSa/ukqnMtv8r09DpWSpXOnA/gAV+eUCfC5jSViAWxVhyw42oxW6vWBKzjnBSSczZSBu88AOf7IiBzKwrQutp/FbgZkhLUJu83qRXmn/Wb22ggawy4eJ8OkEaY5PDzfQbjzEj5qRVwkYb3VX1FMINdBGVgdRimqf6kBEoc1hawdnca02nX5DveOrecAEPmc7yxbjRRoRb9Mv9zXhzYDmYx/gy9Hn3+AlGIGHstkp7iQkiWjbR8AltYCkxBTCrHqxRRhTdbfJK+0w3QBs0CU7LEeIg0jTvpry2/CqutXNDAOi5Pj1u7Imboqh4uHXNRa6zBpFiNDJzuQS3mshRrXJsADHU+Pq53xGMf/MU0ARZ2be/YBoll8Xp3EASOBi1NolQ8oQXX27EDEvCyNc6O23kprtAwDHOFOu2AfAzb4oWGt/At9t6fYLD0vDzJU2DU5p5o2ZOBbOVJFaCPB/aefFyiwSovnRJByDsrcPw40MW124BlzkTw+otvZ7S1MTDDwcaGENmXquWZYSq5fWylAsRQQUE8VhfmSW/nN4h7B/WOZBCGlJj2Z57xiQqvpawvFUlA/NBk/sEjghzvYeDIeA1iukvhLElxK+cSjbbmf3L8iEPlN3VV7PBBQd+9QAaUGTUn8InLnqZU7slsgm3vV8DGtGbo/Cl+O2MtqCVSaxeHm7DlIq6pyBmqsRRIxCUa9M+wlVo+TtByrljGRNjExh4eY2bhUG84srPHIqU/Zg3h6LaJGloI16WdTq0G7/q9lb1C9TDrPNRK0E149p3IzLGSKr67LtNt5MzduRNOZbiIpNyDfZr1VsSHJrPBruUs9fMDMY3HdGLgoHOJPHtZpd6QqWi1fIxQ64vLI3SFYQLNhdLJflDOaJHVQizn0krBSXQRKRAfg6S9bV9hvxBV5seLx0EcJovmE+6gk0NwlSGI2ISWJ4CXe0seMWLu4pnXYlJ4p+YF0ypjh/c2cMUxCODbaywEXIxHy2wmI2Q+eJ8htJ1V1Px9fma/qIoDv7jLnlNMaOiF6/zahPmLtMJGtqJzgfVcZs3ulx6M5Qh/GOFwiKsAGbMQwPeY2sq0oEc5Ss3CrA+RKv6X6gyll9lvT4h7/uEWI+4q+gWiAJrNzcFkxFDs43sF/UD6M8AdvlDuKPqEcDrzyI/Sv3A+osHN56MMrdu6x6ybSypX9Nytl3FhU7Ob8BwNYbCbS8Sbmpao23EVRjL9czsOtvnRHG3NNlaTc4bKpdUXfjVdahgzMuf/+Ax4RtoeWwDLsvX66G39lZsVfLciVZWMPDE7yUeFdYJFb+CKuTRmxAAnqMLOCNCKJ9cjRAltq3M+FL7vMIYRMf6fVqsLvMSkgTKAiQ21hk+kA1ofO/aO4TkMgBnzzwBDJUPkB5sSFjpq+Gk4BsYn24W2Z4Gof9Gd2fHPzVq66MyloosFb9QUNAkZPV+EcIa3wRzKJg75ttc7SYlPMJOES18GieZbVSPxexFiiOOh8ysMuXunF39LYI7ynCpWuSoKaJuxUDeGLyr6go71cU8t424Go3nfhbYqv/3Pt3V0K2bZmzh+FPHNAVAZ3ZdpjyRMzcKzZh/iE1gjiwrv98zTOmLRdJ8RUfOwy/L72985HHvOgV9VHqcqWg0lVPDvGi1FHOuYMoN222gsxscaM3ZFXhBRQzElJ0g4jjkHy3cN6mYQW2wi4SJyGnM1IL/v3gHB5fCzSlNrf1WVD9OQrv4GX2tQHaZlgT1Bzx7iw9xa1BFaG8WGYMQc4D3KyMaib0hdULO2q9Flc2xrXJcJxwUuYOyd/HfJg1hmZ8E9yqYkMRb26Dd0oy01/0BdGTuQV1Fyav8MlMMqJoYBUr4TZapcyONxWDEzuJwzRhLzXNvL6/C99fr9BJUOhZECPpGnhv/vflq+AXor5AIHtdk4Tn3mk2z5aw0xOKdaeOQr4eQQDp7Re2bID7jDp/tuEC4nhqaWufk41lwh5jEPtN6KMUcww701xH7H3tffiQLHcujk1U7dW+2OQYAWDKlIr/mcrvryEb9aQl83DBsdq9lg0vFv76lbtAlx5Oh3Xwxgftig8mPEw9Kl0zfHGuZyMK8BQ2+Uupmaxi02NvUXSCjuYAAv9MGmTS+Jb5uLfVGtCQnKRswwc2OZmKPSbcnwQwmW6O1gC/ANphqqaUNcql5BwgFzv94wuTz1o3XBL3XwuUPrv4l0Hl/yhJrPfMjRgZ01Wl25cLqMMSST9V67w4j3VNz8MRXOO/RUBmRtVznDXBXtnqNTnxj+WFcWmy9uX0kSraKfdE6BzWd/vubkRbTNp1uIteetGDvXzytMNGjiIT81TfbAoDog4l0uXzfb5WRh482AupWRERkRKH9W6ruLJqANDX6o/l6mUl3G5dmFhejsRIxf/DdJ0sXcWPEZF4wox0cWoDHQMsXG8t4hdLMA+dRCOem8TMM31FcnayhxvFnrMbKLiLS5vJWxtMW+yKWz+y4/9DpLRkwVfwAZ6sO8USJa1eFviY/Ufao1AlGf2ZleBjbA1TWPPEzNnLQ9wGk2OzlzvdDmOMDJGbu7To10q9I9tRYRoN9Lc3bF61A80u4ef0BgZFd3ge7VBbK6nrNhcRIN2gCmbp2qAFZYJvfFjGJi8EmkgDijMuaO9sDMGjjatKKff69pQEb9cWOf6isCEW1C/WYwdstv5xqmk5XEz7/2ddCiWnA7W8F9WPaphLyo7Cc0yC4kIAX5ju4A+EHZIpdmQNFzRKnF1iCnpRDTKYIxorF9rZdGAP1cgU7qJD6zfAjAbVrJfxCXANyVDNmpv8Yzk7Xe2GPwM/GAw0e5pnoRbeRSJ+CUwgOdZwHVnat5QegbuBPiy/p8Mf+tY18UXs8Foezu2RETSHAe1fe+sveIIc4rv36r7AYii/tXg2EPa0/HTX7rGOaiyQqLXuyXEbCQVatRsWScl+YcFLqjagJr6ttqdy9RVfm7Wo+KUi49zvrXnGNMcrahW8/DNgLgYrZwFbiBUweo2ea+oX4MMXjs2mHX5o/Nb0QwaP8luA8H5O86hGfTVvaj5CdsENIptiQR6n5N5sjjPBIAoLQaimeclbNhZwGx6rYHuRJGLOaIcnoK3FPe2XNtDUWXckBHeFpGNSPq1EDi+FB5fvNXpW4NtoyoS5yDfsBSEsWJq0Z3ngdUCWf/yxS/6KAdpKnPHC9FS9ra/jzkVWTbOzpLk0op4Ou6SO2vqWLMRcNHOLRHGMtsyZI3Jbxxm/iREI/+qFa2wr8Il9alsPtbk8VyaUhJ8ocxedNmVT7AR091sDM8jPdXfBnXf1cpeXJkhF3ndV/EKt4hqrREv24okZBkZo1RQOexA74Pxj58AzmTfpTqANRtu6di2RDfWRvDxn4PKbaKqiDNQDrKW0/C3NVqXsCXkXF30qu2L2ZrTnqpfhZGP0qYg/NusuzmVkjvc94EP/ElONu7yPFM4Xp0wUITH0eahB+Qb/KexcY8WgPTZmAA">
+
+  <p>
+    Ini gambar AIS asal awak.
+    Untuk imbas AR, paparkan gambar
+    pada peranti kedua atau cetak gambar.
+  </p>
+
+  <button id="startBtn" type="button">
+    MULA IMBAS AIS →
+  </button>
+
+</div>
+
 <script>
-"use strict";
+'use strict';
 
-const scene = document.querySelector("a-scene");
-const marker = document.querySelector("#iceMarker");
-const root = document.querySelector("#particleRoot");
-const arName = document.querySelector("#modelName");
+const $ = id => document.getElementById(id);
 
-const statusEl = document.querySelector("#status");
-const descEl = document.querySelector("#description");
-const phaseEl = document.querySelector("#phaseLabel");
+const scene = document.querySelector('a-scene');
+const marker = $('marker');
+const text3d = $('arText');
+const root = $('balls');
 
-const heat = document.querySelector("#heatZone");
-const cool = document.querySelector("#coolZone");
+const THREE3 = AFRAME.THREE;
+const v = new THREE3.Vector3();
 
-const heatFill = document.querySelector("#heatFill");
-const coolFill = document.querySelector("#coolFill");
-const scanHint = document.querySelector("#scanHint");
-
-const THREE3D = AFRAME.THREE;
-const projected = new THREE3D.Vector3();
-
-const NAMES = [
-  "PEPEJAL • AIS",
-  "CECAIR • AIR",
-  "GAS • WAP AIR"
+const names = [
+  'PEPEJAL • AIS',
+  'CECAIR • AIR',
+  'GAS • WAP AIR'
 ];
 
-const INFO = [
-  "Ais: zarah rapat dan teratur, bergetar pada kedudukan tetap.",
-  "Air cecair: zarah berdekatan, tidak teratur dan bergerak meluncur.",
-  "Wap air: zarah berjauhan dan bergerak bebas secara rawak."
+const info = [
+  'Pepejal: zarah rapat dan bergetar pada kedudukan tetap.',
+  'Cecair: zarah masih rapat tetapi boleh bergerak meluncur.',
+  'Gas: zarah berjauhan dan bergerak bebas secara rawak.'
 ];
 
 let phase = 0;
-let detected = false;
-let held = "";
-let currentZone = "";
-let elapsed = 0;
-let last = performance.now();
+let seen = false;
+let held = '';
+let zone = '';
+let progress = 0;
+let previous = performance.now();
 
-const HOLD_MS = 2300;
-const P = [];
+const HOLD = 2300;
+const balls = [];
 
-// PAPARAN KAMERA DEPAN SEPERTI SELFIE
+const rand = (i,k) => {
+  const n = Math.sin(
+    i * 71.5 + k * 42.9
+  ) * 43758.545;
+
+  return n - Math.floor(n);
+};
+
+/* PAPARAN KAMERA SELFIE */
+
 function updateSelfie() {
   document.documentElement.classList.toggle(
-    "selfie", SELFIE_FLIP
+    'selfie',
+    selfie
   );
 
-  document.documentElement.classList.toggle(
-    "front-requested",
-    CAMERA_MODE === "user"
+  text3d.setAttribute(
+    'scale',
+    selfie ? '-1 1 1' : '1 1 1'
   );
 
-  arName.setAttribute(
-    "scale",
-    SELFIE_FLIP ? "-1 1 1" : "1 1 1"
-  );
-
-  document.querySelector("#flipButton").textContent =
-    SELFIE_FLIP
-      ? "⇋ SELFIE AKTIF"
-      : "⇋ PAPARAN BIASA";
+  $('selfieBtn').textContent =
+    selfie
+      ? '⇋ SELFIE AKTIF'
+      : '⇋ BALIK PAPARAN';
 }
 
 updateSelfie();
 
-document.querySelector("#switchButton").textContent =
-  CAMERA_MODE === "user"
-    ? "⇄ KAMERA BELAKANG"
-    : "⇄ KAMERA DEPAN";
+$('cameraBtn').textContent =
+  KAMERA === 'user'
+    ? '⇄ KAMERA BELAKANG'
+    : '⇄ KAMERA DEPAN';
 
-document.querySelector("#flipButton")
-  .addEventListener("click", () => {
-    SELFIE_FLIP = !SELFIE_FLIP;
-    updateSelfie();
-  });
+$('selfieBtn').onclick = () => {
+  selfie = !selfie;
+  updateSelfie();
+};
 
-// STATUS KAMERA
-scene.addEventListener("arReady", () => {
-  const videos = Array.from(
-    document.querySelectorAll("video")
-  );
+/* BUKA DAN TUTUP GAMBAR AIS */
 
-  const video = videos.find(v => v.srcObject);
+$('startBtn').onclick = () => {
+  $('photo').classList.add('hide');
+};
 
-  const actual = video?.srcObject
-    ?.getVideoTracks?.()[0]
-    ?.getSettings?.().facingMode;
+$('photoBtn').onclick = () => {
+  $('photo').classList.remove('hide');
+};
 
-  const facing =
-    actual === "user" ? "depan" :
-    actual === "environment" ? "belakang" :
-    CAMERA_MODE === "user" ? "depan" : "belakang";
-
-  statusEl.textContent =
-    "Kamera sedia (" + facing + "). Imbas gambar AIS.";
-});
-
-scene.addEventListener("arError", () => {
-  statusEl.textContent =
-    "Kamera tidak dapat dibuka. Semak kebenaran kamera.";
-});
-
-// CIPTA 27 ZARAH AR
-function rand(i, s) {
-  const k = Math.sin(
-    i * 79.33 + s * 43.17
-  ) * 43758.545;
-
-  return k - Math.floor(k);
-}
+/* BINA ZARAH */
 
 for (let i = 0; i < 27; i++) {
-  const sphere = document.createElement("a-sphere");
+  const el = document.createElement('a-sphere');
 
-  sphere.setAttribute("radius", ".062");
-  sphere.setAttribute("color", "#63d8f4");
-  sphere.setAttribute(
-    "material",
-    "roughness:.38;metalness:.1"
+  el.setAttribute('radius', '.06');
+  el.setAttribute('color', '#68d9fa');
+
+  el.setAttribute(
+    'material',
+    'roughness:.4;metalness:.1'
   );
 
-  root.appendChild(sphere);
+  root.appendChild(el);
 
-  P.push({
-    mesh: sphere,
-    base: new THREE3D.Vector3(),
-    vel: new THREE3D.Vector3()
+  balls.push({
+    el,
+    base: new THREE3.Vector3(),
+    vel: new THREE3.Vector3()
   });
 }
 
-// SUSUN ZARAH MENGIKUT KEADAAN JIRIM
-function placeParticles() {
-  P.forEach((p, i) => {
+/* SUSUNAN ZARAH */
+
+function positionBalls() {
+  balls.forEach((p,i) => {
+
     if (phase === 0) {
-      // PEPEJAL
       p.base.set(
-        ((i % 3) - 1) * .18,
-        (Math.floor(i / 9) - 1) * .18,
-        ((Math.floor(i / 3) % 3) - 1) * .18
+        (i % 3 - 1) * .19,
+        (Math.floor(i / 9) - 1) * .19,
+        (Math.floor(i / 3) % 3 - 1) * .19
       );
     }
 
-    else if (phase === 1) {
-      // CECAIR
+    if (phase === 1) {
       p.base.set(
-        ((i % 3) - 1) * .22 +
-          (rand(i, 1) - .5) * .05,
-        -.26 + Math.floor(i / 9) * .17,
-        ((Math.floor(i / 3) % 3) - 1) * .22
+        (i % 3 - 1) * .21 +
+          (rand(i,1) - .5) * .04,
+
+        -.24 + Math.floor(i / 9) * .17,
+
+        (Math.floor(i / 3) % 3 - 1) * .22
       );
     }
 
-    else {
-      // GAS
+    if (phase === 2) {
       p.base.set(
-        (rand(i, 2) - .5) * 1.05,
-        (rand(i, 3) - .5) * .90,
-        (rand(i, 4) - .5) * .88
+        (rand(i,2) - .5) * 1,
+        (rand(i,3) - .5) * .95,
+        (rand(i,4) - .5) * .85
       );
     }
 
     p.vel.set(
-      (rand(i, 11) - .5) * .60,
-      (rand(i, 12) - .5) * .50,
-      (rand(i, 13) - .5) * .57
+      (rand(i,5) - .5) * .65,
+      (rand(i,6) - .5) * .55,
+      (rand(i,7) - .5) * .6
     );
 
-    p.mesh.object3D.position.copy(p.base);
+    p.el.object3D.position.copy(p.base);
   });
 }
 
-// TUKAR KEADAAN JIRIM
-function setPhase(next) {
-  next = Math.max(0, Math.min(2, next));
+/* TUKAR KEADAAN JIRIM */
 
-  if (next === phase) return;
-
-  const old = phase;
-  phase = next;
-  elapsed = 0;
-
-  phaseEl.textContent = NAMES[phase];
-
-  arName.setAttribute(
-    "value",
-    ["PEPEJAL", "CECAIR", "GAS"][phase]
+function changePhase(direction) {
+  const next = Math.max(
+    0,
+    Math.min(2, phase + direction)
   );
 
-  let process = "";
+  if (next === phase) {
+    $('status').textContent =
+      direction > 0
+        ? 'Sudah GAS.'
+        : 'Sudah PEPEJAL.';
 
-  if (next > old) {
-    process = next === 1
-      ? "Pencairan"
-      : "Pengewapan";
-  } else {
-    process = next === 1
-      ? "Kondensasi"
-      : "Pembekuan";
+    return;
   }
 
-  descEl.textContent =
-    process + ": " + INFO[phase];
+  phase = next;
+  progress = 0;
 
-  for (let i = 0; i < 3; i++) {
-    document.querySelector("#s" + i)
-      .classList.toggle("on", i === phase);
-  }
+  $('phaseLabel').textContent = names[phase];
 
-  placeParticles();
+  text3d.setAttribute(
+    'value',
+    ['PEPEJAL','CECAIR','GAS'][phase]
+  );
+
+  const proses = direction > 0
+    ? (phase === 1 ? 'Pencairan' : 'Pengewapan')
+    : (phase === 1 ? 'Kondensasi' : 'Pembekuan');
+
+  $('info').textContent =
+    proses + ': ' + info[phase];
+
+  [...$('states').children].forEach(
+    (e,i) => {
+      e.classList.toggle(
+        'sel',
+        i === phase
+      );
+    }
+  );
+
+  positionBalls();
 }
 
-// KESAN GAMBAR AIS
-marker.addEventListener("targetFound", () => {
-  detected = true;
+/* CARA 2: TEKAN SEKALI */
 
-  scanHint.classList.add("hidden");
+$('quickHeat').onclick = () => {
+  held = '';
+  zone = '';
+  changePhase(1);
+};
 
-  statusEl.textContent =
-    "Gambar AIS dikesan. Cuba 🔥 atau ❄️.";
+$('quickCool').onclick = () => {
+  held = '';
+  zone = '';
+  changePhase(-1);
+};
+
+/* CARA 1: TAHAN 2.3 SAAT */
+
+[
+  ['heat','heat'],
+  ['cool','cool']
+].forEach(([id,name]) => {
+
+  const el = $(id);
+
+  el.addEventListener('pointerdown', e => {
+    e.preventDefault();
+
+    held = name;
+
+    el.setPointerCapture?.(e.pointerId);
+  });
+
+  [
+    'pointerup',
+    'pointercancel',
+    'lostpointercapture'
+  ].forEach(type => {
+
+    el.addEventListener(type, () => {
+      held = '';
+    });
+
+  });
 });
 
-marker.addEventListener("targetLost", () => {
-  detected = false;
-  elapsed = 0;
-  currentZone = "";
+/* PENGESANAN GAMBAR AIS */
 
-  scanHint.classList.remove("hidden");
+marker.addEventListener('targetFound', () => {
+  seen = true;
 
-  statusEl.textContent =
-    "Halakan semula kamera pada gambar AIS.";
+  $('preview').classList.add('hidden');
+  $('photo').classList.add('hide');
+
+  $('status').textContent =
+    'AIS dikesan! Cuba 🔥 atau ❄️.';
 });
 
-// KIRA KEDUDUKAN GAMBAR AIS PADA SKRIN
-function markerPoint() {
+marker.addEventListener('targetLost', () => {
+  seen = false;
+  progress = 0;
+  zone = '';
+
+  $('preview').classList.remove('hidden');
+
+  $('status').textContent =
+    'Halakan kamera semula pada AIS.';
+});
+
+scene.addEventListener('arReady', () => {
+  $('status').textContent =
+    'Kamera sedia. Imbas gambar AIS.';
+});
+
+scene.addEventListener('arError', () => {
+  $('status').textContent =
+    'Kamera gagal dibuka. Semak kebenaran kamera.';
+});
+
+/* KEDUDUKAN GAMBAR AIS */
+
+function markerPosition() {
   if (
-    !detected ||
+    !seen ||
     !scene.camera ||
     !scene.canvas
   ) {
     return null;
   }
 
-  marker.object3D.getWorldPosition(projected);
-  projected.project(scene.camera);
+  marker.object3D.getWorldPosition(v);
+  v.project(scene.camera);
 
   if (
-    !Number.isFinite(projected.x) ||
-    !Number.isFinite(projected.y) ||
-    Math.abs(projected.z) > 1
+    !Number.isFinite(v.x) ||
+    Math.abs(v.z) > 1
   ) {
     return null;
   }
 
-  const rect = scene.canvas.getBoundingClientRect();
+  const r = scene.canvas.getBoundingClientRect();
 
-  const naturalX =
-    rect.left +
-    (projected.x + 1) * rect.width * .5;
+  const x =
+    r.left + (v.x + 1) * r.width * .5;
 
   return {
-    x: SELFIE_FLIP
-      ? rect.left + rect.right - naturalX
-      : naturalX,
+    x: selfie
+      ? r.left + r.right - x
+      : x,
 
-    y: rect.top +
-      (1 - projected.y) * rect.height * .5
+    y:
+      r.top + (1 - v.y) * r.height * .5
   };
 }
 
-function overlaps(point, el) {
-  const rect = el.getBoundingClientRect();
+function inZone(p,el) {
+  const r = el.getBoundingClientRect();
 
   return (
     Math.abs(
-      point.x - (rect.left + rect.width / 2)
-    ) < rect.width * .64
+      p.x - r.left - r.width / 2
+    ) < r.width * .65
   ) && (
     Math.abs(
-      point.y - (rect.top + rect.height / 2)
-    ) < rect.height * .64
+      p.y - r.top - r.height / 2
+    ) < r.height * .65
   );
 }
 
-// CARA 2: BUTANG SEKALI TEKAN
-function quickChange(amount) {
-  const next = Math.max(
-    0,
-    Math.min(2, phase + amount)
-  );
+/* PRATONTON ZARAH */
 
-  held = "";
-  currentZone = "";
-  elapsed = 0;
+const ctx =
+  $('previewCanvas').getContext('2d');
 
-  if (next === phase) {
-    statusEl.textContent = amount > 0
-      ? "Sudah sampai keadaan GAS."
-      : "Sudah sampai keadaan PEPEJAL.";
-
-    return;
-  }
-
-  setPhase(next);
-
-  statusEl.textContent =
-    amount > 0
-      ? "🔥 Panaskan: " + NAMES[phase]
-      : "❄️ Sejukkan: " + NAMES[phase];
-}
-
-// TEKAN SEKALI = TERUS TUKAR
-document.querySelector("#quickHeat")
-  .addEventListener("click", () => {
-    quickChange(1);
-  });
-
-document.querySelector("#quickCool")
-  .addEventListener("click", () => {
-    quickChange(-1);
-  });
-
-// CARA 1: TAHAN SIMBOL SELAMA 2.3 SAAT
-for (const [el, name] of [
-  [heat, "heat"],
-  [cool, "cool"]
-]) {
-  el.addEventListener("pointerdown", e => {
-    e.preventDefault();
-
-    held = name;
-
-    try {
-      el.setPointerCapture(e.pointerId);
-    } catch (_) {}
-  });
-
-  for (const event of [
-    "pointerup",
-    "pointercancel",
-    "lostpointercapture"
-  ]) {
-    el.addEventListener(event, () => {
-      held = "";
-    });
-  }
-}
-
-// PRATONTON ZARAH JIKA BELUM KESAN AIS
-const fallback =
-  document.querySelector("#fallbackCanvas");
-
-const ctx = fallback.getContext("2d");
-
-const dots = Array.from(
-  {length: 27},
-  (_, i) => ({
-    x: (.1 + rand(i, 19) * .8) * fallback.width,
-    y: (.1 + rand(i, 23) * .8) * fallback.height,
-    dx: (rand(i, 31) - .5) * 2.3,
-    dy: (rand(i, 32) - .5) * 2.3
+const moving = Array.from(
+  {length:27},
+  (_,i) => ({
+    x: 15 + rand(i,9) * 180,
+    y: 12 + rand(i,10) * 65,
+    dx: (rand(i,11) - .5) * 2,
+    dy: (rand(i,12) - .5) * 2
   })
 );
 
-function drawPreview(t, dt) {
-  if (detected || !ctx) return;
+function draw2D(t,dt) {
+  if (seen) return;
 
-  const w = fallback.width;
-  const h = fallback.height;
+  ctx.clearRect(0,0,210,90);
 
-  ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = "#0b3049";
-  ctx.fillRect(0, 0, w, h);
-
-  for (let i = 0; i < dots.length; i++) {
-    const d = dots[i];
-    let x, y;
+  for (let i = 0; i < 27; i++) {
+    const p = moving[i];
+    let x,y;
 
     if (phase === 0) {
-      // PEPEJAL
-      x = w / 2 +
-        ((i % 9) - 4) * 17 +
-        Math.sin(t * .016 + i) * 1.4;
+      x = 105 +
+        (i % 9 - 4) * 15 +
+        Math.sin(t * .015 + i) * 1.1;
 
-      y = h / 2 +
-        (Math.floor(i / 9) - 1) * 18 +
-        Math.cos(t * .014 + i) * 1.4;
+      y = 45 +
+        (Math.floor(i / 9) - 1) * 15 +
+        Math.cos(t * .015 + i) * 1.1;
     }
 
     else if (phase === 1) {
-      // CECAIR
-      x = w / 2 +
-        ((i % 9) - 4) * 17 +
-        Math.sin(t * .002 + i) * 9;
+      x = 105 +
+        (i % 9 - 4) * 15 +
+        Math.sin(t * .0015 + i) * 5;
 
-      y = h * .68 +
-        (Math.floor(i / 9) - 1) * 15 +
-        Math.cos(t * .0017 + i) * 4;
+      y = 60 +
+        (Math.floor(i / 9) - 1) * 12 +
+        Math.cos(t * .0018 + i) * 3;
     }
 
     else {
-      // GAS
-      d.x += d.dx * dt / 16;
-      d.y += d.dy * dt / 16;
+      p.x += p.dx * dt / 16;
+      p.y += p.dy * dt / 16;
 
-      if (d.x < 12 || d.x > w - 12) d.dx *= -1;
-      if (d.y < 12 || d.y > h - 12) d.dy *= -1;
+      if (p.x < 9 || p.x > 201) {
+        p.dx *= -1;
+      }
 
-      d.x = Math.max(12, Math.min(w - 12, d.x));
-      d.y = Math.max(12, Math.min(h - 12, d.y));
+      if (p.y < 9 || p.y > 81) {
+        p.dy *= -1;
+      }
 
-      x = d.x;
-      y = d.y;
+      x = p.x;
+      y = p.y;
     }
 
     ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = "#67d9fa";
+    ctx.arc(x,y,3.7,0,Math.PI*2);
+    ctx.fillStyle = '#6cdeff';
     ctx.fill();
   }
 }
 
-// ANIMASI ZARAH DAN KAWALAN PEMANASAN
-function animate(t) {
+/* ANIMASI 3D DAN KAWALAN */
+
+function frame(t) {
   const dt = Math.min(
-    70,
-    Math.max(0, t - last)
+    60,
+    Math.max(0,t-previous)
   );
 
-  last = t;
+  previous = t;
 
-  drawPreview(t, dt);
+  draw2D(t,dt);
 
-  // ANIMASI ZARAH 3D
-  for (let i = 0; i < P.length; i++) {
-    const p = P[i];
-    const pos = p.mesh.object3D.position;
+  balls.forEach((p,i) => {
+    const o = p.el.object3D.position;
     const b = p.base;
 
     if (phase === 0) {
-      // PEPEJAL: BERGETAR
-      pos.set(
-        b.x + Math.sin(t * .013 + i) * .008,
-        b.y + Math.cos(t * .015 + i) * .008,
-        b.z + Math.sin(t * .011 + i) * .008
+      o.set(
+        b.x + Math.sin(t*.014+i)*.007,
+        b.y + Math.cos(t*.015+i)*.007,
+        b.z
       );
     }
 
     else if (phase === 1) {
-      // CECAIR: MELUNCUR
-      pos.set(
-        b.x + Math.sin(t * .0018 + i) * .045,
-        b.y + Math.cos(t * .0015 + i) * .026,
-        b.z + Math.cos(t * .0017 + i) * .047
+      o.set(
+        b.x + Math.sin(t*.0017+i)*.04,
+        b.y + Math.cos(t*.0014+i)*.018,
+        b.z + Math.sin(t*.0015+i)*.04
       );
     }
 
     else {
-      // GAS: BERGERAK BEBAS
-      pos.addScaledVector(p.vel, dt / 1000);
+      o.addScaledVector(
+        p.vel,
+        dt/1000
+      );
 
-      for (const axis of ["x", "y", "z"]) {
-        const limit = axis === "y" ? .46 : .54;
+      for (const axis of ['x','y','z']) {
+        const limit =
+          axis === 'y' ? .48 : .52;
 
-        if (Math.abs(pos[axis]) > limit) {
-          pos[axis] =
-            Math.sign(pos[axis]) * limit;
+        if (Math.abs(o[axis]) > limit) {
+          o[axis] =
+            Math.sign(o[axis]) * limit;
 
           p.vel[axis] *= -1;
         }
       }
     }
-  }
+  });
 
-  // CARA 1: SIMBOL TAHAN ATAU GAMBAR AIS
-  let zone = held;
+  let active = held;
 
-  if (!zone) {
-    const point = markerPoint();
+  if (!active) {
+    const p = markerPosition();
 
-    if (point) {
-      if (overlaps(point, heat)) {
-        zone = "heat";
-      } else if (overlaps(point, cool)) {
-        zone = "cool";
+    if (p) {
+      if (inZone(p,$('heat'))) {
+        active = 'heat';
+      }
+      else if (inZone(p,$('cool'))) {
+        active = 'cool';
       }
     }
   }
 
-  if (zone !== currentZone) {
-    currentZone = zone;
-    elapsed = 0;
+  if (active !== zone) {
+    zone = active;
+    progress = 0;
   }
 
-  if (zone) {
-    const possible = zone === "heat"
-      ? phase < 2
-      : phase > 0;
+  if (active) {
+    const allowed =
+      active === 'heat'
+        ? phase < 2
+        : phase > 0;
 
-    if (possible) {
-      elapsed += dt;
+    if (allowed) {
+      progress += dt;
 
-      if (elapsed >= HOLD_MS) {
-        setPhase(
-          phase + (zone === "heat" ? 1 : -1)
+      if (progress >= HOLD) {
+        changePhase(
+          active === 'heat'
+            ? 1
+            : -1
         );
 
-        elapsed = 0;
+        progress = 0;
       }
-    } else {
-      elapsed = 0;
+    }
+    else {
+      progress = 0;
     }
 
-    statusEl.textContent = possible
+    $('status').textContent = allowed
       ? (
-          zone === "heat"
-            ? "Membekalkan haba..."
-            : "Menyingkirkan haba..."
+          active === 'heat'
+            ? '🔥 Pemanasan sedang berlaku...'
+            : '❄️ Penyejukan sedang berlaku...'
         )
-      : "Keadaan akhir telah dicapai.";
+      : 'Keadaan akhir telah dicapai.';
   }
 
-  else if (detected) {
-    statusEl.textContent =
-      "Alihkan gambar AIS ke 🔥 atau ❄️.";
-  }
-
-  heat.classList.toggle(
-    "active",
-    zone === "heat"
+  $('heat').classList.toggle(
+    'active',
+    active === 'heat'
   );
 
-  cool.classList.toggle(
-    "active",
-    zone === "cool"
+  $('cool').classList.toggle(
+    'active',
+    active === 'cool'
   );
 
-  heatFill.style.width =
-    (zone === "heat"
-      ? elapsed / HOLD_MS * 100
+  $('hf').style.width =
+    (active === 'heat'
+      ? progress/HOLD*100
       : 0
-    ) + "%";
+    ) + '%';
 
-  coolFill.style.width =
-    (zone === "cool"
-      ? elapsed / HOLD_MS * 100
+  $('cf').style.width =
+    (active === 'cool'
+      ? progress/HOLD*100
       : 0
-    ) + "%";
+    ) + '%';
 
-  requestAnimationFrame(animate);
+  requestAnimationFrame(frame);
 }
 
-placeParticles();
-requestAnimationFrame(animate);
+positionBalls();
+requestAnimationFrame(frame);
+
 </script>
 
 </body>
